@@ -1,4 +1,11 @@
-FROM d9magai/http2apache:latest
+FROM ubuntu AS stage1
+
+RUN apt-get update && apt-get install -y git \
+    && cd /root \
+    && git clone https://github.com/Harpya/identity-provider.git ./tmp \
+    && cd tmp && git checkout master 
+
+FROM d9magai/http2apache:latest AS stage2
 
 LABEL AUTHOR="Eduardo Luz <eduardo@eduardo-luz.com>"
 LABEL PROJECT="Harpya <https://www.harpya.net>"
@@ -12,7 +19,7 @@ RUN mkdir /usr/local/apache2/conf/conf.d && mkdir /usr/local/apache2/conf/sites.
 COPY conf.d/* /usr/local/apache2/conf/conf.d/
 COPY sites.d/* /usr/local/apache2/conf/sites.d/
 
-COPY ./tmp/app/public /var/www/html/public
+COPY --from=stage1 /root/tmp/app/public /var/www/html/public
 COPY start.sh /root
 
 RUN adduser www-data \
